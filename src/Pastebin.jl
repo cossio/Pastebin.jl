@@ -1,88 +1,123 @@
 module Pastebin
-export
-    paste!,
-    delpaste!,
-    getraw,
-    content,
-    success
 
-using Requests
-include("TypeDeclarations.jl")
+import HTTP
 
-const API = "http://pastebin.com/api/api_post.php"
+const API = "https://pastebin.com/api/api_post.php"
 
-function paste!(client::PastebinClient, title::AbstractString, text::AbstractString, expiration::Expiration=NEVER, access::Access=PUBLIC)
-    userKey = client.userKey
-    devKey = client.devKey
+struct Client
+    devKey::String
+    userKey::String
 
-    format = "Text"
-    accessString = 1
-    expirationNode = ""
-    accessNode = 0
+    """
+        Client(devKey, userKey = "")
 
-    if expiration == NEVER
-        expirationNode = "N"
-    elseif expiration == TEN_M
-        expirationNode = "10M"
-    elseif expiration == HOUR
-        expirationNode = "1H"
-    elseif expiration == DAY
-        expirationNode = "1D"
-    elseif expiration == WEEK
-        expirationNode = "1W"
-    elseif expiration == TWO_WEEKS
-        expirationNode = "2W"
-    elseif expiration == MONTH
-        expirationNode = "1M"
+    Creates a `Pastebin.Client`. If `userKey` is empty, accesses are as guest.
+    """
+    Client(devKey::String, userKey::String = "") = new(devKey, userKey)
+
+    """
+        Client(devKey, username, password)
+
+    Login, generating a `userKey` for the session.
+    """
+    function Client(devKey::String, username::String, password::String)
+        data = Dict(
+            "api_dev_key" => devKey,
+            "api_user_name" => username,
+            "api_user_password" => password,
+        )
+        response = String(HTTP.post("https://pastebin.com/api/api_login.php", [], HTTP.Form(data)).body)
+        return new(devKey, response)
     end
+end
 
-    if access == PUBLIC
-        accessNode = 0
-    elseif access == PRIVATE
-        accessNode = isempty(userKey) ? error("For a private paste, providing a USER_KEY is required. Exiting.") : 2
-    elseif access == UNLISTED
-        access = 1
+function Base.show(io::IO, client::Client)
+    if isempty(client.userKey)
+        print(io, "Pastebin.Client(...) -- no userKey")
+    else
+        print(io, "Pastebin.Client(...) -- userKey set")
     end
+end
 
+struct Response
+    successful::Bool
+    response::String
+end
+
+function Response(response::AbstractString)
+    successful = !contains("Bad API Request", response)
+    return Response(successful, response)
+end
+
+"""
+    paste(client, title, text; expire = "N", access = 0)
+
+Submits `text` to pastebin. If `client` has a `userKey`, the paste will be created by
+that user.
+
+`expire` date is one of: `"N"` (never, default), `"10M"` (10 minutes), `"1H"` (1 hour),
+`"1D"` (1 day), `"1W"` (1 week), `"2W"` (2 weeks), `"1M"` (1 month), `"6M"` (6 months),
+`"1Y"` (1 year).
+
+`access` is an integer: `0` (public), `1` (unlisted, default) or `2` (private, requires a `userKey`).
+`format` determines syntax highlight (plain text by default).
+
+See <https://pastebin.com/doc_api>.
+"""
+function paste(
+    client::Client, title::String, text::String;
+    expire::String="N", access::Int=1, format::String="text"
+)
+    if access == 2 && isempty(client.userKey)
+        throw(ArgumentError("for a private paste, providing a user key is required"))
+    end
     data = Dict(
         "api_option"            => "paste",
-        "api_paste_private"     => accessString,
+        "api_paste_private"     => string(access),
         "api_paste_name"        => title,
-        "api_paste_expire_date" => expirationNode,
+        "api_paste_expire_date" => expire,
         "api_paste_format"      => format,
-        "api_dev_key"           => devKey,
+        "api_dev_key"           => client.devKey,
+        "api_user_key"          => client.userKey,
         "api_paste_code"        => text
     )
-
-    if !isnull(userKey)
-        data["api_user_key"] = get(userKey)
-    end
-
-    response = readall(Requests.post(API, data=data))
-    contains("Bad API Request", response) ? PastebinResponse(false, response) : PastebinResponse(true, response)
+    response = String(HTTP.post(API, [], HTTP.Form(data)).body)
+    return Response(response)
 end
 
-function delpaste!(client::PastebinClient, key::PasteKey)
+"""
+    delete(client, key)
+
+Deletes paste `key` from the server. Requires a `userKey`.
+"""
+function delete(client::Client, key::String)
+    if isempty(client.userKey)
+        throw(ArgumentError("providing a userKey is required to delete a paste"))
+    end
     data = Dict(
-        "api_option"            => "delete",
-        "api_dev_key"           => client.devKey,
-        "api_paste_key"         => key.key,
+        "api_option"    => "delete",
+        "api_dev_key"   => client.devKey,
+        "api_user_key"  => client.userKey,
+        "api_paste_key" => key,
     )
-
-    if !isnull(client.userKey)
-        data["api_user_key"] = get(client.userKey)
-    end
-
-    response = readall(Requests.post(API, data=data))
-    contains("Bad API Request", response) ? PastebinResponse(false, response) : PastebinResponse(true, response)
+    response = String(HTTP.post(API, [], HTTP.Form(data)).body)
+    return Response(response)
 end
 
-function getraw(key::PasteKey)
-    response = readall(Requests.get("http://pastebin.com/raw/" * key.key))
-    contains("Bad API Request", response) ? PastebinResponse(false, response) : PastebinResponse(true, response)
+"""
+    getraw(key)
+
+Fetch a raw paste by `key`. Returns a `response = Pastebin.Response(...)` object.
+The raw paste string can be accessed as `Pastebin.content(response)`.
+"""
+function getraw(key::AbstractString)
+    response = String(HTTP.get("https://pastebin.com/raw/$key").body)
+    return Response(response)
 end
 
-content(resp::PastebinResponse) = resp.response
-success(resp::PastebinResponse) = resp.successful
+content(resp::Response) = resp.response
+success(resp::Response) = resp.successful
+parsekey(url::String) = split(url, "/")[end]
+parsekey(resp::Response) = parsekey(content(resp))
 
 end # end of module

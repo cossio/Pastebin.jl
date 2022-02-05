@@ -1,0 +1,14 @@
+name = "Pastebin"
+uuid = "0d6c9454-f81a-4f72-b66a-3a4362bb1520"
+authors = [
+    "Mark Molnar",
+    "Jorge Fernandez-de-Cossio-Diaz <j.cossio.diaz@gmail.com>"
+]
+version = "0.1.0"
+
+[deps]
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+
+[compat]
+julia = "1.6"
+HTTP = "0.9"

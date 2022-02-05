@@ -1,44 +1,22 @@
 # Pastebin.jl - A Wrapper around the Pastebin REST API
 
-[![Build Status](https://travis-ci.org/molnarmark/Pastebin.jl.svg?branch=master)](https://travis-ci.org/molnarmark/Pastebin.jl)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cossio/Pastebin.jl/blob/master/LICENSE.md)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://cossio.github.io/Pastebin.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://cossio.github.io/Pastebin.jl/dev)
+![](https://github.com/cossio/Pastebin.jl/workflows/CI/badge.svg)
+[![codecov](https://codecov.io/gh/cossio/Pastebin.jl/branch/master/graph/badge.svg?token=cg6SYz6xuU)](https://codecov.io/gh/cossio/Pastebin.jl)
 
-### Installation
+## Installation
+
+This package is registered. Install with:
 
 ```Julia
+using Pkg
 Pkg.add("Pastebin")
 ```
-### Usage
 
-```Julia
-using Pastebin
-```
+## Related
 
-###### You have 3 ways of creating a Pastebin Client:
+Originally developed by Mark Molnar, 
+<https://github.com/molnarmark/Pastebin.jl>
 
-```Julia
-PastebinClient(devKey::AbstractString)
-PastebinClient(devKey::AbstractString, userKey::AbstractString)
-PastebinClient(devKey::AbstractString, username::AbstractString, password::AbstractString)
-```
-
-###### Available Methods:
-```Julia
-# For creating pastes
-# Note: If your client has a user key, the paste will be created by that user.
-paste!(client::PastebinClient, title::AbstractString, text::AbstractString, expiration::Expiration, access::Access)
-
-# For removing pastes
-delpaste!(client::PastebinClient, key::PasteKey)
-
-# For retrieving pastes by Paste Key.
-# Example: getraw(PasteKey("fs52lKAHf"))
-getraw(key::PasteKey)
-```
-###### You can use the following methods to access parts of the PastebinResponse:
-```Julia
-content(resp::PastebinResponse)
-success(resp::PastebinResponse)
-```
-
-# License: MIT
-###### Developed by Mark Molnar, 2016

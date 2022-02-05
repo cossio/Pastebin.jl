@@ -13,9 +13,9 @@ Pastebin.content(response)
 
 client = Pastebin.Client(ENV["PASTEBIN_DEVKEY"])
 
-# Paste something
+# Paste something (to expire in 1 hour)
 
-response = Pastebin.paste!(client, "A test", "Hola Pastebin")
+response = Pastebin.paste!(client, "A test", "Hola Pastebin"; expire="1H")
 
 # URL of the created paste
 

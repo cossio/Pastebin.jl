@@ -6,6 +6,8 @@
 ![](https://github.com/cossio/Pastebin.jl/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/cossio/Pastebin.jl/branch/master/graph/badge.svg?token=cg6SYz6xuU)](https://codecov.io/gh/cossio/Pastebin.jl)
 
+Pastebin.jl is a Julia wrapper for the [Pastebin](https://pastebin.com/) API.
+
 ## Installation
 
 This package is registered. Install with:
@@ -17,6 +19,9 @@ Pkg.add("Pastebin")
 
 ## Related
 
-Originally developed by Mark Molnar, 
+Pastebin.jl was originally developed by Mark Molnar,
 <https://github.com/molnarmark/Pastebin.jl>
 
+See also [Pasteee.jl](https://github.com/cossio/Pasteee.jl), a Julia wrapper for the [Paste.ee](https://paste.ee/) API.
+Note that Pastebin has some limitations, such as 10 pastes / day for guests accounts (see <https://pastebin.com/faq#11a>).
+Paste.ee doesn't have such strict limitations.

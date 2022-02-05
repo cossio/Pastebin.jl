@@ -15,15 +15,11 @@ client = Pastebin.Client(ENV["PASTEBIN_DEVKEY"])
 
 # Paste something (to expire in 1 hour)
 
-response = Pastebin.paste!(client, "A test", "Hola Pastebin"; expire="1H")
+response = Pastebin.paste(client, "A test", "Hola Pastebin"; expire="1H")
 
-# URL of the created paste
+# Extract the key of the created paste
 
-url = Pastebin.content(response)
-
-# Extract only the key
-
-key = Pastebin.parsekey(url)
+key = Pastebin.parsekey(response)
 
 # We can now access the created paste using this key
 
